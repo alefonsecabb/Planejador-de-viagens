@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree *)",
+      "Bash(git config *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(npm install *)",
+      "PowerShell(npm *)",
+      "PowerShell(npm install *)",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Set-Location \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\"; node scripts/generate-icons.js 2>&1)",
+      "PowerShell(npm run *)",
+      "PowerShell(npx playwright --version 2>&1; node -e \"require\\('playwright'\\)\" 2>&1 | Select-Object -First 3)",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; npx playwright --version 2>&1)",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; npx playwright install chromium 2>&1 | Select-Object -Last 5)",
+      "PowerShell(Start-Sleep -Seconds 10; $env:NODE_OPTIONS=\"--use-system-ca\"; node -e \"require\\('playwright'\\); console.log\\('ok'\\)\" 2>&1)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Invoke-WebRequest -Uri \"http://localhost:5173\" -UseBasicParsing 2>&1 | Select-Object StatusCode, @{N='Body';E={$_.Content.Substring\\(0, [Math]::Min\\(200, $_.Content.Length\\)\\)}})",
+      "PowerShell(curl *)",
+      "PowerShell(try { $r = [System.Net.WebRequest]::Create\\(\"http://localhost:5173\"\\).GetResponse\\(\\); \"Status: $\\($r.StatusCode\\)\" } catch { \"Error: $_\" })",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Get-Content \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\verify-edge.js\" | node --input-type=module 2>&1)",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Set-Location \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\"; node \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\verify-edge.js\" 2>&1)",
+      "PowerShell(Copy-Item *)",
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Set-Location \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\"; node verify-edge.js 2>&1)"
+    ]
+  }
+}
