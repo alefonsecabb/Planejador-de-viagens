@@ -1,6 +1,7 @@
 import { MapPin, Calendar, ChevronRight, AlertTriangle } from 'lucide-react'
 import { formatDate, formatCurrency, getDaysUntil } from '../utils/dateUtils'
 import { Badge } from './ui/Badge'
+import { legsStore } from '../utils/storage'
 
 const STATUS_LABEL = { planning: 'Planejando', ongoing: 'Em viagem', completed: 'Concluída' }
 const STATUS_COLOR = { planning: 'blue', ongoing: 'green', completed: 'gray' }
@@ -9,6 +10,8 @@ export function TripCard({ trip, expenses = [], onClick }) {
   const total = expenses.reduce((s, e) => s + (e.amount || 0), 0)
   const pct = trip.budget ? Math.round((total / trip.budget) * 100) : 0
   const hasAlerts = expenses.some(e => e.status === 'pending' && e.dueDate && getDaysUntil(e.dueDate) <= 3)
+  const tripLegs = legsStore.getAll().filter(l => l.tripId === trip.id).sort((a, b) => a.order - b.order)
+  const destinationText = tripLegs.length > 0 ? tripLegs.map(l => l.name).join(' → ') : trip.destination
 
   return (
     <div
@@ -23,7 +26,7 @@ export function TripCard({ trip, expenses = [], onClick }) {
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-400 mb-2">
             <MapPin size={12} />
-            <span className="truncate">{trip.destination}</span>
+            <span className="truncate">{destinationText}</span>
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-400">
             <Calendar size={12} />

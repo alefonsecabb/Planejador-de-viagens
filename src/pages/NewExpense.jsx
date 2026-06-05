@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useTrips } from '../hooks/useTrips'
 import { useExpenses } from '../hooks/useExpenses'
+import { useLegs } from '../hooks/useLegs'
 import { Button } from '../components/ui/Button'
 import { Input, Select, Textarea } from '../components/ui/Input'
 
@@ -28,13 +29,14 @@ export default function NewExpense() {
   const navigate = useNavigate()
   const { getTrip } = useTrips()
   const { addExpense } = useExpenses(id)
+  const { legs } = useLegs(id)
   const trip = getTrip(id)
 
   const [form, setForm] = useState({
     category: 'flight', title: '', amount: '', dueDate: '', eventDate: '',
-    status: 'pending', notes: '',
+    status: 'pending', notes: '', legId: '',
     // flight
-    airline: '', origin: '', destination: '', flightNumber: '',
+    airline: '', origin: '', destination: '', flightNumber: '', departureTime: '',
     // hotel
     hotelName: '', nights: '', pricePerNight: '',
     // activity
@@ -91,6 +93,7 @@ export default function NewExpense() {
       status: form.status,
       notes: form.notes,
       details,
+      legId: form.legId || null,
     })
     navigate(`/trips/${id}`)
   }
@@ -103,7 +106,7 @@ export default function NewExpense() {
   }
 
   function buildDetails() {
-    if (form.category === 'flight') return { airline: form.airline, origin: form.origin, destination: form.destination, flightNumber: form.flightNumber }
+    if (form.category === 'flight') return { airline: form.airline, origin: form.origin, destination: form.destination, flightNumber: form.flightNumber, departureTime: form.departureTime }
     if (form.category === 'hotel') return { hotelName: form.hotelName, nights: form.nights, pricePerNight: form.pricePerNight }
     if (form.category === 'activity') return { location: form.activityLocation, time: form.activityTime }
     if (form.category === 'car_rental') return { company: form.carCompany, pickup: form.carPickup, return: form.carReturn, pricePerDay: form.pricePerDay }
@@ -113,13 +116,15 @@ export default function NewExpense() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      <div className="sticky top-0 bg-slate-900/95 backdrop-blur border-b border-white/10 px-4 py-3 flex items-center gap-3 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-lg font-bold">Novo Gasto</h1>
-          {trip && <p className="text-xs text-slate-400">{trip.name}</p>}
+      <div className="safe-top sticky top-0 bg-slate-900/95 backdrop-blur border-b border-white/10 z-10">
+        <div className="px-4 py-4 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
+            <ArrowLeft size={22} />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold">Novo Gasto</h1>
+            {trip && <p className="text-xs text-slate-400">{trip.name}</p>}
+          </div>
         </div>
       </div>
 
@@ -145,6 +150,13 @@ export default function NewExpense() {
           </div>
         </div>
 
+        {legs.length > 0 && (
+          <Select label="Destino" value={form.legId} onChange={e => set('legId', e.target.value)}>
+            <option value="">Toda a viagem</option>
+            {legs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </Select>
+        )}
+
         <Input label="Descrição" placeholder="Ex: Passagem TAP Lisboa" value={form.title}
           onChange={e => set('title', e.target.value)} error={errors.title} />
 
@@ -163,6 +175,8 @@ export default function NewExpense() {
               <Input label="Destino" placeholder="LIS" value={form.destination}
                 onChange={e => set('destination', e.target.value)} />
             </div>
+            <Input label="Horário de partida" type="time" value={form.departureTime}
+              onChange={e => set('departureTime', e.target.value)} />
           </div>
         )}
 

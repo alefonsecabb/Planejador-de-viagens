@@ -4,6 +4,7 @@ import NewTrip from './pages/NewTrip'
 import TripDetail from './pages/TripDetail'
 import NewExpense from './pages/NewExpense'
 import Settings from './pages/Settings'
+import ImportTrip from './pages/ImportTrip'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/trips/:id" element={<TripDetail />} />
         <Route path="/trips/:id/expenses/new" element={<NewExpense />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/import" element={<ImportTrip />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

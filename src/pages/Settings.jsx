@@ -40,11 +40,13 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      <div className="sticky top-0 bg-slate-900/95 backdrop-blur border-b border-white/10 px-4 py-3 flex items-center gap-3 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-lg font-bold">Configurações</h1>
+      <div className="safe-top sticky top-0 bg-slate-900/95 backdrop-blur border-b border-white/10 z-10">
+        <div className="px-4 py-4 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
+            <ArrowLeft size={22} />
+          </button>
+          <h1 className="text-xl font-bold">Configurações</h1>
+        </div>
       </div>
 
       <div className="p-4 space-y-6 pb-10">

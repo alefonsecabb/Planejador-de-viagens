@@ -3,6 +3,7 @@ const KEYS = {
   EXPENSES: 'vt_expenses',
   CONTACTS: 'vt_contacts',
   SETTINGS: 'vt_settings',
+  LEGS: 'vt_legs',
 }
 
 function load(key, fallback) {
@@ -36,4 +37,9 @@ export const contactsStore = {
 export const settingsStore = {
   get: () => load(KEYS.SETTINGS, { alertDaysBeforeDue: 3, defaultCurrency: 'BRL' }),
   save: (settings) => save(KEYS.SETTINGS, settings),
+}
+
+export const legsStore = {
+  getAll: () => load(KEYS.LEGS, []),
+  save: (legs) => save(KEYS.LEGS, legs),
 }
