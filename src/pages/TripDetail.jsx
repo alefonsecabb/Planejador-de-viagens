@@ -16,6 +16,7 @@ import { formatDate, formatCurrency } from '../utils/dateUtils'
 import { buildAlertMessage, buildSummaryMessage } from '../utils/callmebot'
 import { buildShareUrl } from '../utils/shareUtils'
 import { contactsStore } from '../utils/storage'
+import { useImages } from '../hooks/useImages'
 
 const CAT_CONFIG = {
   flight:     { label: 'Passagens', icon: '✈️' },
@@ -120,6 +121,32 @@ export default function TripDetail() {
   // Group expenses: by leg, then "Geral" for those without legId
   const legExpenses = (legId) => expenses.filter(e => e.legId === legId)
   const generalExpenses = expenses.filter(e => !e.legId)
+
+  function FlightImages({ expenseId }) {
+    const { images } = useImages(expenseId)
+    const [viewing, setViewing] = useState(null)
+    if (!images.length) return null
+    return (
+      <div className="ml-9 mt-2 flex gap-2 flex-wrap">
+        {images.map(img => (
+          <button key={img.id} type="button" onClick={() => setViewing(img.dataUrl)}
+            className="w-14 h-14 rounded-lg overflow-hidden border border-white/10 active:opacity-80">
+            <img src={img.dataUrl} className="w-full h-full object-cover" alt="Cartão de embarque" />
+          </button>
+        ))}
+        {viewing && (
+          <div className="fixed inset-0 z-50 bg-black flex flex-col" onClick={() => setViewing(null)}>
+            <div className="safe-top flex justify-end px-4 pt-4">
+              <button className="p-2 rounded-full bg-white/10 text-white"><X size={22} /></button>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-3">
+              <img src={viewing} className="max-w-full max-h-full object-contain rounded-xl" alt="Cartão de embarque" />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   function ExpenseSection({ items, currency }) {
     if (!items.length) return null
@@ -263,17 +290,20 @@ export default function TripDetail() {
                       </div>
                     </div>
                     {legFlights.map(f => (
-                      <div key={f.id} className="ml-9 mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
-                        <span>✈️</span>
-                        <span className="font-medium text-slate-300">
-                          {[f.details?.airline, f.details?.flightNumber].filter(Boolean).join(' ')}
-                        </span>
-                        {f.details?.origin && f.details?.destination && (
-                          <span>{f.details.origin} → {f.details.destination}</span>
-                        )}
-                        {f.details?.departureTime && (
-                          <span className="text-slate-500">· {f.details.departureTime}</span>
-                        )}
+                      <div key={f.id}>
+                        <div className="ml-9 mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
+                          <span>✈️</span>
+                          <span className="font-medium text-slate-300">
+                            {[f.details?.airline, f.details?.flightNumber].filter(Boolean).join(' ')}
+                          </span>
+                          {f.details?.origin && f.details?.destination && (
+                            <span>{f.details.origin} → {f.details.destination}</span>
+                          )}
+                          {f.details?.departureTime && (
+                            <span className="text-slate-500">· {f.details.departureTime}</span>
+                          )}
+                        </div>
+                        <FlightImages expenseId={f.id} />
                       </div>
                     ))}
                   </div>

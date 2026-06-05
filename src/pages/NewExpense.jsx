@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 import { useTrips } from '../hooks/useTrips'
 import { useExpenses } from '../hooks/useExpenses'
 import { useLegs } from '../hooks/useLegs'
+import { imageStore } from '../utils/imageStore'
+import { ImageGallery } from '../components/ImageGallery'
 import { Button } from '../components/ui/Button'
 import { Input, Select, Textarea } from '../components/ui/Input'
 
@@ -47,6 +49,7 @@ export default function NewExpense() {
     miscSub: 'Alimentação',
   })
   const [errors, setErrors] = useState({})
+  const [pendingImages, setPendingImages] = useState([])
 
   function set(field, value) {
     setForm(f => {
@@ -77,13 +80,13 @@ export default function NewExpense() {
     return errs
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     const details = buildDetails()
-    addExpense({
+    const expense = addExpense({
       tripId: id,
       category: form.category,
       title: form.title || defaultTitle(),
@@ -95,6 +98,11 @@ export default function NewExpense() {
       details,
       legId: form.legId || null,
     })
+
+    for (const dataUrl of pendingImages) {
+      await imageStore.add({ expenseId: expense.id, dataUrl, filename: 'foto.jpg' })
+    }
+
     navigate(`/trips/${id}`)
   }
 
@@ -177,6 +185,12 @@ export default function NewExpense() {
             </div>
             <Input label="Horário de partida" type="time" value={form.departureTime}
               onChange={e => set('departureTime', e.target.value)} />
+            <ImageGallery
+              label="Cartão de embarque"
+              pendingImages={pendingImages}
+              onAdd={(dataUrl) => setPendingImages(p => [...p, dataUrl])}
+              onRemove={(idx) => setPendingImages(p => p.filter((_, i) => i !== idx))}
+            />
           </div>
         )}
 
@@ -214,6 +228,12 @@ export default function NewExpense() {
             </div>
             <Input label="Valor / dia" type="number" min="0" step="0.01" placeholder="150,00" value={form.pricePerDay}
               onChange={e => set('pricePerDay', e.target.value)} />
+            <ImageGallery
+              label="Reserva / contrato"
+              pendingImages={pendingImages}
+              onAdd={(dataUrl) => setPendingImages(p => [...p, dataUrl])}
+              onRemove={(idx) => setPendingImages(p => p.filter((_, i) => i !== idx))}
+            />
           </div>
         )}
 
