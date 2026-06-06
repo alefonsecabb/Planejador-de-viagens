@@ -1,14 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="120" fill="#1e3a5f"/>
-  <rect width="512" height="512" rx="120" fill="url(#grad)"/>
   <defs>
-    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1e40af"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f2c"/>
+      <stop offset="50%" stop-color="#0f2d6e"/>
+      <stop offset="100%" stop-color="#1a56db"/>
     </linearGradient>
+    <radialGradient id="glow" cx="65%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="ps" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="2" dy="4" stdDeviation="8" flood-color="#1e40af" flood-opacity="0.55"/>
+    </filter>
+    <filter id="gs">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
   </defs>
-  <!-- Plane body -->
-  <g transform="translate(256,256)" fill="white">
-    <path d="M-20,-140 L20,-140 L60,20 L160,60 L160,90 L60,70 L40,160 L70,175 L70,195 L0,175 L-70,195 L-70,175 L-40,160 L-60,70 L-160,90 L-160,60 L-60,20 Z" opacity="0.95"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+
+  <!-- Stars -->
+  <circle cx="88"  cy="92"  r="2.5" fill="white" opacity="0.75"/>
+  <circle cx="432" cy="68"  r="2"   fill="white" opacity="0.55"/>
+  <circle cx="465" cy="195" r="3"   fill="white" opacity="0.4"/>
+  <circle cx="48"  cy="290" r="2"   fill="white" opacity="0.5"/>
+  <circle cx="410" cy="415" r="2.5" fill="white" opacity="0.35"/>
+  <circle cx="145" cy="455" r="2"   fill="white" opacity="0.3"/>
+  <circle cx="108" cy="168" r="1.5" fill="white" opacity="0.65"/>
+  <circle cx="462" cy="340" r="2"   fill="white" opacity="0.4"/>
+  <circle cx="72"  cy="400" r="1.5" fill="white" opacity="0.45"/>
+  <circle cx="375" cy="118" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="310" cy="58"  r="1.5" fill="white" opacity="0.45"/>
+  <circle cx="52"  cy="155" r="1.5" fill="white" opacity="0.4"/>
+
+  <!-- Contrail (fading dashed lines behind the plane) -->
+  <path d="M108,392 Q178,340 252,264" stroke="white" stroke-width="2.5" fill="none" opacity="0.14"
+        stroke-linecap="round" stroke-dasharray="9,7"/>
+  <path d="M92,412 Q162,356 242,278" stroke="white" stroke-width="1.5" fill="none" opacity="0.08"
+        stroke-linecap="round" stroke-dasharray="7,9"/>
+
+  <!-- Airplane: top-down view, rotating -45° → ascending to upper-right -->
+  <g transform="translate(264,250) rotate(-42)" filter="url(#ps)">
+    <!-- Fuselage -->
+    <path d="M0,-108 C10,-102 18,-80 18,-40 L18,65 C18,75 10,82 0,85 C-10,82 -18,75 -18,65 L-18,-40 C-18,-80 -10,-102 0,-108 Z"
+          fill="white"/>
+    <!-- Main wings -->
+    <path d="M-17,-15 L-138,58 L-122,82 L-12,28 Z" fill="white"/>
+    <path d="M17,-15 L138,58 L122,82 L12,28 Z" fill="white"/>
+    <!-- Wing-tip lights -->
+    <circle cx="-135" cy="63" r="5.5" fill="#93c5fd" opacity="0.9"/>
+    <circle cx="135"  cy="63" r="5.5" fill="#93c5fd" opacity="0.9"/>
+    <!-- Engine pods -->
+    <ellipse cx="-80" cy="38" rx="11" ry="24" fill="white" opacity="0.88"/>
+    <ellipse cx="80"  cy="38" rx="11" ry="24" fill="white" opacity="0.88"/>
+    <!-- Tail horizontal stabilizers -->
+    <path d="M-13,68 L-66,100 L-60,112 L-9,80 Z" fill="white"/>
+    <path d="M13,68 L66,100 L60,112 L9,80 Z" fill="white"/>
+    <!-- Vertical tail fin -->
+    <ellipse cx="0" cy="78" rx="9" ry="26" fill="white" opacity="0.88"/>
+    <!-- Cockpit windows -->
+    <ellipse cx="0" cy="-94" rx="8" ry="10" fill="#bfdbfe" opacity="0.75"/>
+    <!-- Fuselage window stripe -->
+    <rect x="-5" y="-55" width="10" height="90" rx="5" fill="#dbeafe" opacity="0.2"/>
   </g>
 </svg>
