@@ -144,7 +144,10 @@ export default function NewTrip() {
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <Input label="Chegada" type="date" value={leg.startDate}
-                    onChange={e => setLeg(leg.tempId, 'startDate', e.target.value)}
+                    onChange={e => {
+                      setLeg(leg.tempId, 'startDate', e.target.value)
+                      if (!leg.endDate) setLeg(leg.tempId, 'endDate', e.target.value)
+                    }}
                     error={errors[`leg_${leg.tempId}_startDate`]} />
                   <Input label="Partida" type="date" value={leg.endDate}
                     min={leg.startDate}

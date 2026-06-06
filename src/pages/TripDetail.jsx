@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, MessageSquare, MapPin, Send, X, Share2, Pencil } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, MessageSquare, MapPin, Send, X, Share2, Pencil, ChevronUp, ChevronDown } from 'lucide-react'
 import { useTrips } from '../hooks/useTrips'
 import { useExpenses } from '../hooks/useExpenses'
 import { useLegs } from '../hooks/useLegs'
@@ -11,7 +11,7 @@ import { ExpenseItem } from '../components/ExpenseItem'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
-import { Input } from '../components/ui/Input'
+import { Input, Select } from '../components/ui/Input'
 import { formatDate, formatCurrency } from '../utils/dateUtils'
 import { buildAlertMessage, buildSummaryMessage } from '../utils/callmebot'
 import { buildShareUrl } from '../utils/shareUtils'
@@ -29,6 +29,8 @@ const CAT_CONFIG = {
 const STATUS_COLOR = { planning: 'blue', ongoing: 'green', completed: 'gray' }
 const STATUS_LABEL = { planning: 'Planejando', ongoing: 'Em viagem', completed: 'Concluída' }
 
+const CURRENCIES = ['BRL', 'USD', 'EUR', 'ARS', 'CLP', 'PEN', 'COP', 'GBP']
+
 export default function TripDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -41,12 +43,22 @@ export default function TripDetail() {
   const [whatsappModal, setWhatsappModal] = useState(false)
   const [sendResult, setSendResult] = useState(null)
   const [deleteModal, setDeleteModal] = useState(false)
+
+  // Add/Edit leg
   const [addLegModal, setAddLegModal] = useState(false)
   const [newLeg, setNewLeg] = useState({ name: '', startDate: '', endDate: '' })
   const [legErrors, setLegErrors] = useState({})
   const [editingLeg, setEditingLeg] = useState(null)
   const [editLegForm, setEditLegForm] = useState({ name: '', startDate: '', endDate: '' })
   const [editLegErrors, setEditLegErrors] = useState({})
+
+  // Edit flight inline
+  const [editingFlight, setEditingFlight] = useState(null)
+  const [editFlightForm, setEditFlightForm] = useState({ airline: '', flightNumber: '', origin: '', destination: '', departureTime: '' })
+
+  // Edit trip
+  const [editTripModal, setEditTripModal] = useState(false)
+  const [editTripForm, setEditTripForm] = useState({ name: '', budget: '', currency: 'BRL' })
 
   const trip = getTrip(id)
   if (!trip) return (
@@ -56,6 +68,16 @@ export default function TripDetail() {
   )
 
   const hasContacts = contactsStore.getAll().length > 0
+
+  function syncTripDates(updatedLegs) {
+    if (!updatedLegs.length) return
+    const sorted = [...updatedLegs].sort((a, b) => (a.startDate || '') < (b.startDate || '') ? -1 : 1)
+    updateTrip(trip.id, {
+      startDate: sorted[0].startDate,
+      endDate: sorted[sorted.length - 1].endDate || sorted[sorted.length - 1].startDate,
+      destination: updatedLegs.map(l => l.name).join(' → '),
+    })
+  }
 
   async function handleShare() {
     const payload = JSON.stringify({ trip, legs, expenses })
@@ -93,10 +115,11 @@ export default function TripDetail() {
     if (!newLeg.name.trim()) errs.name = 'Nome obrigatório'
     if (!newLeg.startDate) errs.startDate = 'Data obrigatória'
     if (Object.keys(errs).length) { setLegErrors(errs); return }
-    addLeg({ tripId: id, name: newLeg.name, startDate: newLeg.startDate, endDate: newLeg.endDate || newLeg.startDate, order: legs.length })
+    const added = addLeg({ tripId: id, name: newLeg.name, startDate: newLeg.startDate, endDate: newLeg.endDate || newLeg.startDate, order: legs.length })
     setNewLeg({ name: '', startDate: '', endDate: '' })
     setLegErrors({})
     setAddLegModal(false)
+    syncTripDates([...legs, added])
   }
 
   function openEditLeg(leg) {
@@ -115,7 +138,59 @@ export default function TripDetail() {
       startDate: editLegForm.startDate,
       endDate: editLegForm.endDate || editLegForm.startDate,
     })
+    const updatedLegs = legs.map(l => l.id === editingLeg.id
+      ? { ...l, name: editLegForm.name, startDate: editLegForm.startDate, endDate: editLegForm.endDate || editLegForm.startDate }
+      : l
+    )
+    syncTripDates(updatedLegs)
     setEditingLeg(null)
+  }
+
+  function handleDeleteLeg(legId) {
+    deleteLeg(legId)
+    const updatedLegs = legs.filter(l => l.id !== legId)
+    syncTripDates(updatedLegs)
+  }
+
+  function moveLeg(leg, direction) {
+    const sorted = [...legs]
+    const idx = sorted.findIndex(l => l.id === leg.id)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sorted.length) return
+    updateLeg(sorted[idx].id, { order: sorted[swapIdx].order })
+    updateLeg(sorted[swapIdx].id, { order: sorted[idx].order })
+  }
+
+  function openEditFlight(f) {
+    setEditingFlight(f)
+    setEditFlightForm({
+      airline: f.details?.airline || '',
+      flightNumber: f.details?.flightNumber || '',
+      origin: f.details?.origin || '',
+      destination: f.details?.destination || '',
+      departureTime: f.details?.departureTime || '',
+    })
+  }
+
+  function handleSaveEditFlight() {
+    updateExpense(editingFlight.id, {
+      details: { ...editingFlight.details, ...editFlightForm },
+    })
+    setEditingFlight(null)
+  }
+
+  function openEditTrip() {
+    setEditTripForm({ name: trip.name, budget: String(trip.budget || ''), currency: trip.currency || 'BRL' })
+    setEditTripModal(true)
+  }
+
+  function handleSaveEditTrip() {
+    updateTrip(trip.id, {
+      name: editTripForm.name.trim() || trip.name,
+      budget: parseFloat(editTripForm.budget) || 0,
+      currency: editTripForm.currency,
+    })
+    setEditTripModal(false)
   }
 
   // Group expenses: by leg, then "Geral" for those without legId
@@ -211,7 +286,13 @@ export default function TripDetail() {
         {/* Trip header */}
         <div>
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h1 className="text-2xl font-bold text-white leading-tight">{trip.name}</h1>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-white leading-tight truncate">{trip.name}</h1>
+              <button onClick={openEditTrip}
+                className="shrink-0 p-1 rounded-lg hover:bg-blue-500/20 text-slate-500 hover:text-blue-400 transition-colors">
+                <Pencil size={15} />
+              </button>
+            </div>
             <Badge color={STATUS_COLOR[trip.status]}>{STATUS_LABEL[trip.status]}</Badge>
           </div>
           {legs.length > 0 ? (
@@ -264,7 +345,18 @@ export default function TripDetail() {
                 const legFlights = expenses.filter(e => e.legId === leg.id && e.category === 'flight')
                 return (
                   <div key={leg.id} className="py-2 border-b border-white/5 last:border-0">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      {/* Reorder arrows */}
+                      <div className="flex flex-col shrink-0">
+                        <button onClick={() => moveLeg(leg, 'up')}
+                          className={`p-0.5 rounded transition-colors ${idx === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-600 hover:text-blue-400 hover:bg-blue-500/10'}`}>
+                          <ChevronUp size={14} />
+                        </button>
+                        <button onClick={() => moveLeg(leg, 'down')}
+                          className={`p-0.5 rounded transition-colors ${idx === legs.length - 1 ? 'opacity-0 pointer-events-none' : 'text-slate-600 hover:text-blue-400 hover:bg-blue-500/10'}`}>
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
                       <div className="flex flex-col items-center shrink-0">
                         <div className="w-6 h-6 rounded-full bg-blue-600/30 border border-blue-500/50 flex items-center justify-center text-xs font-bold text-blue-300">
                           {idx + 1}
@@ -283,7 +375,7 @@ export default function TripDetail() {
                           className="p-1 rounded-lg hover:bg-blue-500/20 text-slate-600 hover:text-blue-400 transition-colors">
                           <Pencil size={14} />
                         </button>
-                        <button onClick={() => deleteLeg(leg.id)}
+                        <button onClick={() => handleDeleteLeg(leg.id)}
                           className="p-1 rounded-lg hover:bg-red-500/20 text-slate-600 hover:text-red-400 transition-colors">
                           <X size={14} />
                         </button>
@@ -291,7 +383,7 @@ export default function TripDetail() {
                     </div>
                     {legFlights.map(f => (
                       <div key={f.id}>
-                        <div className="ml-9 mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
+                        <div className="ml-14 mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
                           <span>✈️</span>
                           <span className="font-medium text-slate-300">
                             {[f.details?.airline, f.details?.flightNumber].filter(Boolean).join(' ')}
@@ -302,6 +394,10 @@ export default function TripDetail() {
                           {f.details?.departureTime && (
                             <span className="text-slate-500">· {f.details.departureTime}</span>
                           )}
+                          <button onClick={() => openEditFlight(f)}
+                            className="ml-1 p-0.5 rounded hover:bg-blue-500/20 text-slate-600 hover:text-blue-400 transition-colors">
+                            <Pencil size={11} />
+                          </button>
                         </div>
                         <FlightImages expenseId={f.id} />
                       </div>
@@ -363,7 +459,11 @@ export default function TripDetail() {
             error={legErrors.name} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="Chegada" type="date" value={newLeg.startDate}
-              onChange={e => { setNewLeg(l => ({ ...l, startDate: e.target.value })); setLegErrors(er => ({ ...er, startDate: undefined })) }}
+              onChange={e => {
+                const v = e.target.value
+                setNewLeg(l => ({ ...l, startDate: v, endDate: l.endDate || v }))
+                setLegErrors(er => ({ ...er, startDate: undefined }))
+              }}
               error={legErrors.startDate} />
             <Input label="Partida" type="date" value={newLeg.endDate} min={newLeg.startDate}
               onChange={e => setNewLeg(l => ({ ...l, endDate: e.target.value }))} />
@@ -383,7 +483,11 @@ export default function TripDetail() {
             error={editLegErrors.name} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="Chegada" type="date" value={editLegForm.startDate}
-              onChange={e => { setEditLegForm(f => ({ ...f, startDate: e.target.value })); setEditLegErrors(er => ({ ...er, startDate: undefined })) }}
+              onChange={e => {
+                const v = e.target.value
+                setEditLegForm(f => ({ ...f, startDate: v, endDate: f.endDate || v }))
+                setEditLegErrors(er => ({ ...er, startDate: undefined }))
+              }}
               error={editLegErrors.startDate} />
             <Input label="Partida" type="date" value={editLegForm.endDate} min={editLegForm.startDate}
               onChange={e => setEditLegForm(f => ({ ...f, endDate: e.target.value }))} />
@@ -391,6 +495,53 @@ export default function TripDetail() {
           <div className="flex gap-3 pt-1">
             <Button variant="secondary" className="flex-1" onClick={() => setEditingLeg(null)}>Cancelar</Button>
             <Button className="flex-1" onClick={handleSaveEditLeg}>Salvar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Flight Modal */}
+      <Modal open={!!editingFlight} onClose={() => setEditingFlight(null)} title="Editar Voo">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Companhia" placeholder="TAP Air, LATAM..." value={editFlightForm.airline}
+              onChange={e => setEditFlightForm(f => ({ ...f, airline: e.target.value }))} />
+            <Input label="Nº do voo" placeholder="TP084" value={editFlightForm.flightNumber}
+              onChange={e => setEditFlightForm(f => ({ ...f, flightNumber: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Origem" placeholder="GRU" value={editFlightForm.origin}
+              onChange={e => setEditFlightForm(f => ({ ...f, origin: e.target.value }))} />
+            <Input label="Destino" placeholder="LIS" value={editFlightForm.destination}
+              onChange={e => setEditFlightForm(f => ({ ...f, destination: e.target.value }))} />
+          </div>
+          <Input label="Horário de partida" type="time" value={editFlightForm.departureTime}
+            onChange={e => setEditFlightForm(f => ({ ...f, departureTime: e.target.value }))} />
+          <div className="flex gap-3 pt-1">
+            <Button variant="secondary" className="flex-1" onClick={() => setEditingFlight(null)}>Cancelar</Button>
+            <Button className="flex-1" onClick={handleSaveEditFlight}>Salvar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Trip Modal */}
+      <Modal open={editTripModal} onClose={() => setEditTripModal(false)} title="Editar Viagem">
+        <div className="space-y-4">
+          <Input label="Nome da viagem" placeholder="Ex: Europa 2026" value={editTripForm.name}
+            onChange={e => setEditTripForm(f => ({ ...f, name: e.target.value }))} />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <Input label="Orçamento total" type="number" min="0" step="0.01" placeholder="0,00"
+                value={editTripForm.budget}
+                onChange={e => setEditTripForm(f => ({ ...f, budget: e.target.value }))} />
+            </div>
+            <Select label="Moeda" value={editTripForm.currency}
+              onChange={e => setEditTripForm(f => ({ ...f, currency: e.target.value }))}>
+              {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </Select>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <Button variant="secondary" className="flex-1" onClick={() => setEditTripModal(false)}>Cancelar</Button>
+            <Button className="flex-1" onClick={handleSaveEditTrip}>Salvar</Button>
           </div>
         </div>
       </Modal>

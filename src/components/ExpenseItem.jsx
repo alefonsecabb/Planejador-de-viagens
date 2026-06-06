@@ -1,4 +1,5 @@
-import { Trash2, CheckCircle } from 'lucide-react'
+import { Trash2, CheckCircle, Pencil } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { formatCurrency, dueLabelAndColor, formatDate } from '../utils/dateUtils'
 import { Badge } from './ui/Badge'
 import { ImageGallery } from './ImageGallery'
@@ -14,6 +15,7 @@ const IMAGE_CATS = ['flight', 'car_rental']
 const IMAGE_LABEL = { flight: 'Cartão de embarque', car_rental: 'Reserva / contrato' }
 
 export function ExpenseItem({ expense, onDelete, onStatusChange }) {
+  const navigate = useNavigate()
   const { label: dueLabel, color: dueColor } = expense.dueDate && expense.status === 'pending'
     ? dueLabelAndColor(expense.dueDate)
     : { label: '', color: 'gray' }
@@ -46,6 +48,13 @@ export function ExpenseItem({ expense, onDelete, onStatusChange }) {
                 <CheckCircle size={16} />
               </button>
             )}
+            <button
+              onClick={() => navigate(`/trips/${expense.tripId}/expenses/${expense.id}/edit`)}
+              className="p-1 rounded-lg hover:bg-blue-500/20 text-slate-500 hover:text-blue-400 transition-colors"
+              title="Editar"
+            >
+              <Pencil size={16} />
+            </button>
             <button
               onClick={() => onDelete(expense.id)}
               className="p-1 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-colors"
