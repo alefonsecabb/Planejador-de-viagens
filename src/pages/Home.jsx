@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid'
 import { useTrips } from '../hooks/useTrips'
 import { useExpenses } from '../hooks/useExpenses'
 import { tripsStore, legsStore, expensesStore } from '../utils/storage'
+import { imageStore } from '../utils/imageStore'
 import { TripCard } from '../components/TripCard'
 import { Button } from '../components/ui/Button'
 
@@ -20,15 +21,14 @@ export default function Home() {
     e.target.value = ''
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
-        const { trip, legs = [], expenses = [] } = JSON.parse(ev.target.result)
+        const { trip, legs = [], expenses = [], images = [] } = JSON.parse(ev.target.result)
         if (!trip?.name) throw new Error('invalid')
 
+        const today = new Date().toISOString().split('T')[0]
         const newTripId = uuid()
-        tripsStore.save([...tripsStore.getAll(), {
-          ...trip, id: newTripId, createdAt: new Date().toISOString().split('T')[0]
-        }])
+        tripsStore.save([...tripsStore.getAll(), { ...trip, id: newTripId, createdAt: today }])
 
         const legIdMap = {}
         const newLegs = legs.map((leg, i) => {
@@ -38,12 +38,24 @@ export default function Home() {
         })
         legsStore.save([...legsStore.getAll(), ...newLegs])
 
-        const newExpenses = expenses.map(exp => ({
-          ...exp, id: uuid(), tripId: newTripId,
-          legId: exp.legId ? (legIdMap[exp.legId] ?? null) : null,
-          createdAt: new Date().toISOString().split('T')[0],
-        }))
+        const expenseIdMap = {}
+        const newExpenses = expenses.map(exp => {
+          const newId = uuid()
+          expenseIdMap[exp.id] = newId
+          return { ...exp, id: newId, tripId: newTripId,
+            legId: exp.legId ? (legIdMap[exp.legId] ?? null) : null,
+            createdAt: today }
+        })
         expensesStore.save([...expensesStore.getAll(), ...newExpenses])
+
+        if (images.length) {
+          await imageStore.addBatch(
+            images
+              .filter(img => expenseIdMap[img.expenseId])
+              .map(img => ({ dataUrl: img.dataUrl, filename: img.filename,
+                             expenseId: expenseIdMap[img.expenseId] }))
+          )
+        }
 
         navigate(`/trips/${newTripId}`)
       } catch {

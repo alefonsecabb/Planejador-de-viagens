@@ -16,6 +16,7 @@ import { formatDate, formatCurrency } from '../utils/dateUtils'
 import { buildAlertMessage, buildSummaryMessage } from '../utils/callmebot'
 import { buildShareUrl } from '../utils/shareUtils'
 import { contactsStore } from '../utils/storage'
+import { imageStore } from '../utils/imageStore'
 import { useImages } from '../hooks/useImages'
 
 const CAT_CONFIG = {
@@ -80,7 +81,9 @@ export default function TripDetail() {
   }
 
   async function handleShare() {
-    const payload = JSON.stringify({ trip, legs, expenses })
+    const expenseIds = expenses.map(e => e.id)
+    const images = await imageStore.getByExpenseIds(expenseIds)
+    const payload = JSON.stringify({ trip, legs, expenses, images })
     const safeName = trip.name.replace(/[^a-zA-Z0-9À-ÿ _-]/g, '').trim() || 'viagem'
     const file = new File([payload], `${safeName}.json`, { type: 'application/json' })
 

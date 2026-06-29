@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import { CheckCircle, MapPin, Calendar, Wallet } from 'lucide-react'
 import { tripsStore, legsStore, expensesStore } from '../utils/storage'
+import { imageStore } from '../utils/imageStore'
 import { decodeShareData } from '../utils/shareUtils'
 import { formatDate, formatCurrency } from '../utils/dateUtils'
 import { Button } from '../components/ui/Button'
@@ -19,13 +20,13 @@ export default function ImportTrip() {
   const encoded = searchParams.get('data')
   const payload = encoded ? decodeShareData(encoded) : null
 
-  function handleImport() {
+  async function handleImport() {
     if (!payload) return
-    const { trip, legs = [], expenses = [] } = payload
+    const { trip, legs = [], expenses = [], images = [] } = payload
 
+    const today = new Date().toISOString().split('T')[0]
     const newTripId = uuid()
-    const newTrip = { ...trip, id: newTripId, createdAt: new Date().toISOString().split('T')[0] }
-    tripsStore.save([...tripsStore.getAll(), newTrip])
+    tripsStore.save([...tripsStore.getAll(), { ...trip, id: newTripId, createdAt: today }])
 
     const legIdMap = {}
     const newLegs = legs.map((leg, i) => {
@@ -35,14 +36,24 @@ export default function ImportTrip() {
     })
     legsStore.save([...legsStore.getAll(), ...newLegs])
 
-    const newExpenses = expenses.map(exp => ({
-      ...exp,
-      id: uuid(),
-      tripId: newTripId,
-      legId: exp.legId ? (legIdMap[exp.legId] ?? null) : null,
-      createdAt: new Date().toISOString().split('T')[0],
-    }))
+    const expenseIdMap = {}
+    const newExpenses = expenses.map(exp => {
+      const newId = uuid()
+      expenseIdMap[exp.id] = newId
+      return { ...exp, id: newId, tripId: newTripId,
+        legId: exp.legId ? (legIdMap[exp.legId] ?? null) : null,
+        createdAt: today }
+    })
     expensesStore.save([...expensesStore.getAll(), ...newExpenses])
+
+    if (images.length) {
+      await imageStore.addBatch(
+        images
+          .filter(img => expenseIdMap[img.expenseId])
+          .map(img => ({ dataUrl: img.dataUrl, filename: img.filename,
+                         expenseId: expenseIdMap[img.expenseId] }))
+      )
+    }
 
     setDone(true)
     setTimeout(() => navigate(`/trips/${newTripId}`), 1500)

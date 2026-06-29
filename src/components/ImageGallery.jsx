@@ -95,7 +95,7 @@ function GalleryExisting({ expenseId, label }) {
         />
       )}
 
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       {viewing && <ImageViewer src={viewing} onClose={() => setViewing(null)} />}
     </div>
   )
@@ -152,7 +152,7 @@ function GalleryPending({ pendingImages, onAdd, onRemove, label }) {
         />
       )}
 
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       {viewing && <ImageViewer src={viewing} onClose={() => setViewing(null)} />}
     </div>
   )

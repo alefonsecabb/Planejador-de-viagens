@@ -65,6 +65,34 @@ export const imageStore = {
     })
   },
 
+  async getByExpenseIds(expenseIds) {
+    if (!expenseIds.length) return []
+    const db = await openDB()
+    const tx = db.transaction(STORE, 'readonly')
+    const index = tx.objectStore(STORE).index('expenseId')
+    const arrays = await Promise.all(
+      expenseIds.map(id => new Promise((res, rej) => {
+        const req = index.getAll(id)
+        req.onsuccess = e => res(e.target.result)
+        req.onerror = e => rej(e.target.error)
+      }))
+    )
+    return arrays.flat()
+  },
+
+  async addBatch(records) {
+    if (!records.length) return
+    const db = await openDB()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite')
+      const store = tx.objectStore(STORE)
+      const today = new Date().toISOString().split('T')[0]
+      records.forEach(r => store.add({ ...r, id: uuid(), createdAt: r.createdAt || today }))
+      tx.oncomplete = resolve
+      tx.onerror = e => reject(e.target.error)
+    })
+  },
+
   async delete(id) {
     const db = await openDB()
     return new Promise((resolve, reject) => {

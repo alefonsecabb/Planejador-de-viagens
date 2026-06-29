@@ -22,7 +22,20 @@
       "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Get-Content \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\verify-edge.js\" | node --input-type=module 2>&1)",
       "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Set-Location \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\"; node \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\verify-edge.js\" 2>&1)",
       "PowerShell(Copy-Item *)",
-      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Set-Location \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\"; node verify-edge.js 2>&1)"
+      "PowerShell($env:NODE_OPTIONS=\"--use-system-ca\"; Set-Location \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\"; node verify-edge.js 2>&1)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\App para viagens\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(npm run *)",
+      "PowerShell(ls *)",
+      "PowerShell(npx playwright --version 2>$null; node -e \"require\\('playwright'\\)\" 2>$null; echo \"done\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5199/)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Receive-Job *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(npm root *)"
     ]
   }
 }
